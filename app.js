@@ -1,109 +1,87 @@
 // require modules
-
-const http = require('http')
-const express = require('express');
+const http = require("http");
+const express = require("express");
 const db = require('./modules/db')
 
-// set up  server 
+// set up server
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app)
 
-// include middleware (static files, )
-app.use(express.static('./public'));
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
-
-
-// make new todo entry
 let id = 6;
 
-// get all todos
+// include middleware (static files, json, urlencode)
+app.use(express.static('./public'))
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+
+// Get all Todos
 app.get('/api/v1/todos', (req, res) => {
     res.json(db.todos)
-});
+})
 
-
-
-// create new todo by id
+// Create new Todo
 app.post('/api/v1/todos', (req, res) => {
-    // console.log(req.body)
-    // if incorrect response responds with error
-    if(!req.body || !req.body.text) {
+    if (!req.body || !req.body.text) {
+        // respond with an error
         res.status(422).json({
-            error: "Must include todo text"
+            error: "must include todo text"
         })
         return
     }
-    const newtodo = {
+    const newTodo = {
         id: id++,
         text: req.body.text,
         completed: false
     }
-    // adds to todo list
-    db.todos.push(newtodo)
-    // creates response with new json data
-    res.status(201).json(newtodo)
-
+    db.todos.push(newTodo)
+    res.status(201).json(newTodo)
 })
 
-
-
-
+// Update existing todo by id
 app.patch('/api/v1/todos/:id', (req, res) => {
-    //  function to get the id from route handle
-    // parseint changes response into a number
+    // get the id from the route
     const id = parseInt(req.params.id)
-
-
-
-
-    // function to find the existing todo 
+    // find the existing todo
     const todoIndex = db.todos.findIndex((todo) => {
         return todo.id === id
     })
-    if(todoIndex === -1){
-        res.json(404).json({ error: 'could not find todo with that id'})
+    // if we could not find the todo with that id
+    if (todoIndex === -1) {
+        res.status(404).json({ error: 'could not find todo with that id ' })
+        return
     }
-    // update the todo
-    if (req.body && req.body.text){ 
-    db.todos[todoIndex].text = req.body.text} 
-    if (req.body && req.body.completed !== undefined){
-    db.todos[todoIndex].completed = req.body.completed  
+    // update the todo text if one was provided
+    if (req.body && req.body.text) {
+        db.todos[todoIndex].text = req.body.text
     }
-    
-    // respond with updated files
+    // update the todo completed status if it was provided
+    if (req.body && req.body.completed !== undefined) {
+        db.todos[todoIndex].completed = req.body.completed
+    }
+    // respond with updated item
     res.json(db.todos[todoIndex])
 })
 
-
-
 // delete existing todo by id
-
 app.delete('/api/v1/todos/:id', (req, res) => {
     // get the id
     const id = parseInt(req.params.id)
     // find the existing todo
-const todoIndex = db.todos.findIndex((todo) => {
-    return todo.id === id
-})
-
-//  if we cant find the todo with that id, respond with 404
-if(todoIndex === -1){
-    res.json(404).json({ error: 'could not find todo with that id'})
-}
+    const todoIndex = db.todos.findIndex((todo) => {
+        return todo.id === id
+    })
+    // if we could not find the todo with that id
+    if (todoIndex === -1) {
+        res.status(404).json({ error: 'could not find todo with that id ' })
+        return
+    }
     // delete the todo
-db.todos.splice(todoIndex, 1)
-
-
-res.status(204).json()
+    db.todos.splice(todoIndex, 1)
     // respond with 204 and empty response
+    res.status(204).json()
 })
 
-
-
-
-
-// server listen 
-server.listen(3000, '127.0.0.1', () => { 
-    console.log('Server Listening on http//:127.0.0.1:3000')
-}) 
+// listen for requests
+server.listen(3000, '127.0.0.1', () => {
+    console.log('Server Listening on http://127.0.0.1:3000')
+})
